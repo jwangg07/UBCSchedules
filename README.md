@@ -55,20 +55,12 @@ cd client
 npm test
 ```
 
-<!-- ## API
-
-| Method | Route                        | Description                                                            |
-| ------ | ----------------------------- | ------------------------------------------------------------------------ |
-| GET    | `/api/terms`                  | List of available terms                                                 |
-| GET    | `/api/sections/:dept/:course` | Sections for a course
-| POST   | `/api/bug-report`             | Submits a bug report via email (Resend)                                 |
-| GET    | `/health-check`               | Pinged by an external cron job to keep Render's free-tier instance warm | -->
-
 ## Known limitations / roadmap
 
 - **Linked sections**: Some UBC courses have specific lab/discussion sections paired with a lecture (MATH_V 100). The scheduler currently treats component types as independently combinable, which results in combinations UBC's registration system wouldn't allow.
 - No persistence: schedules aren't saved between sessions.
-- Backend currently has no automated tests.
+- Precompute section selector; some sections don't have an affect on the number of schedules produced (they always conflict), and unselecting them makes no difference.
+- Render backend server goes to sleep after 15 minutes of inactivity; takes up to 30 seconds to boot up again. Could create CRON job to probe backend every ~14 minutes to keep it alive.
 
 ## License
 
