@@ -345,10 +345,10 @@ function TopBar() {
     return (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 22px", background: COLORS.PRIMARY, flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: COLORS.BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <CalendarDays size={16} color="#fff" />
+                <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: COLORS.BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <CalendarDays size={30} color="#fff" />
                 </div>
-                <div style={{ fontFamily: "'Fraunces', serif", fontSize: "15px", fontWeight: 600, color: "#fff", lineHeight: 1.1 }}>
+                <div style={{ fontFamily: "'Fraunces', serif", fontSize: "30px", fontWeight: 600, color: "#fff", lineHeight: 1.1 }}>
                     UBCSchedules
                 </div>
             </div>
