@@ -3,12 +3,14 @@ import { generateSchedules } from "./util/scheduler.js";
 import { fetchTerms, fetchCourse } from "./api/ubcApi.js";
 import CourseSidebar from "./ui/CourseSidebar.jsx";
 import ScheduleCalendar from "./ui/ScheduleCalendar.jsx";
+import ScheduleList from "./ui/ScheduleList.jsx";
 import ScheduleNav from "./ui/ScheduleNav.jsx";
 import EmptyState from "./ui/EmptyState.jsx";
 import { DEFAULT_SETTINGS } from "./ui/ScheduleSettings.jsx";
 import SkeletonLoader from "./ui/SkeletonLoader.jsx";
 import BugReport from "./ui/BugReport.jsx";
-import { COLORS } from "./util/theme.js"
+import { COLORS } from "./util/theme.js";
+import { CalendarDays, Sparkles } from "lucide-react";
 
 /**
  * Renders the course scheduler application.
@@ -25,6 +27,7 @@ export default function App() {
     const [generated, setGenerated] = useState(null);
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [sectionSelections, setSectionSelections] = useState({}); // locked sections
+    const [view, setView] = useState("week"); // "week" | "list"
 
     useEffect(() => {
         fetchTerms()
@@ -54,7 +57,7 @@ export default function App() {
         handleTermChange(selectedTerm.name, campus); // must pass campus manually because setCampus() is asynchronous
     }
 
-    /**
+    /**s
      * Changes the term, accounting for current campus selection, and resets states.
         * @param {string} termName - Full name of the term (e.g. "2025-26 Winter Term 1 (UBC-V)").
         * @param {string} [campusName] - Name of the campus (optional, used for {@link handleCampusChange}).
@@ -71,6 +74,11 @@ export default function App() {
         setGenerated(null);
         setIndex(0);
         setAddStatus({ loading: false, error: null });
+    };
+
+    const handleDisplayTermChange = (displayName) => {
+        const suffix = campus === "Vancouver" ? "(UBC-V)" : "(UBC-O)";
+        handleTermChange(`${displayName} ${suffix}`);
     };
 
     /**
@@ -123,8 +131,6 @@ export default function App() {
         setSectionSelections((prev) => {
             const course = courses.find((c) => c.code === courseCode);
             const courseSel = prev[courseCode] ?? {};
-            // If we haven't touched this type before, start from "everything
-            // allowed" (i.e. every id currently offered for that type)
             const currentIds = courseSel[type] ?? new Set(course.components[type].map((o) => o.label));
             const nextIds = new Set(currentIds);
             if (nextIds.has(sectionId)) nextIds.delete(sectionId);
@@ -173,7 +179,6 @@ export default function App() {
                 const kept = options.filter((o) => {
                     const withinTime = o.days.length === 0 || (o.start >= startMin && o.end <= endMin);
                     const statusAllowed = !settings.excludedStatuses.includes(o.status);
-                    // No entry for this type => user hasn't restricted it => allow all
                     const sectionAllowed = !sel?.[type] || sel[type].has(o.label);
                     return withinTime && statusAllowed && sectionAllowed;
                 });
@@ -193,53 +198,39 @@ export default function App() {
     const schedules = useMemo(() => {
         if (!generated) return [];
         if (unavailableComponents.length > 0) return [];
-        else return generateSchedules(filteredCourses);
+        return generateSchedules(filteredCourses);
     }, [generated, filteredCourses, courses]);
 
     const current = schedules[index];
+    const scheduleCountLabel = schedules.length === 100 ? "100+" : schedules.length;
 
     if (termsError) {
         return (
-            <>
-                <BugReport />
-                <div style={{ padding: "24px", color: COLORS.ERROR, fontFamily: "'Inter', system-ui, sans-serif" }}>
+            <div style={outerStyle}>
+                <TopBar />
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", color: COLORS.ERROR, fontFamily: "'Inter', system-ui, sans-serif" }}>
                     Couldn't load terms from the backend ({termsError}).
                 </div>
-            </>
+            </div>
         );
     }
 
     if (terms.length === 0) {
-        return (
-            <>
-                <BugReport />
-                <SkeletonLoader />
-            </>
-        );
+        return <SkeletonLoader />;
     }
+
     return (
-        <>
-            <BugReport />
-            <div style={{
-                fontFamily: "'Inter', system-ui, sans-serif",
-                background: COLORS.BACKGROUND,
-                minHeight: "600px",
-                color: COLORS.PRIMARY,
-                display: "flex",
-                borderRadius: "14px",
-                overflow: "hidden",
-                border: `1px solid ${COLORS.ACCENT}`,
-            }}>
+        <div style={outerStyle}>
+            <TopBar />
+
+            <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
                 <CourseSidebar
                     campus={campus}
                     onCampusChange={handleCampusChange}
-                    terms={displayTerms}
-                    onTermChange={handleTermChange}
                     courses={courses}
                     onAddCourse={handleAddCourse}
                     onRemoveCourse={handleRemoveCourse}
                     addStatus={addStatus}
-                    onGenerate={() => { setGenerated(true); setIndex(0); }}
                     settings={settings}
                     onSettingsChange={setSettings}
                     sectionSelections={sectionSelections}
@@ -248,46 +239,117 @@ export default function App() {
                     onSelectNoSections={handleSelectNoSections}
                 />
 
-                <div style={{ flex: 1, padding: "24px 28px", overflow: "auto" }}>
-                    {!generated && (
-                        <EmptyState
-                            title="Add your courses, then generate"
-                            message="Search for courses by subject and number on the left. The engine will search every combination of lecture, lab, and tutorial sections and show you only the ones with zero time conflicts."
-                        />
-                    )}
+                <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "20px 28px", background: "#fff" }}>
+                    {/* Controls row */}
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: "16px", marginBottom: "18px", flexShrink: 0 }}>
+                        <div style={{ minWidth: "230px" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: COLORS.TEXT_MEDIUM, marginBottom: "6px" }}>
+                                <CalendarDays size={12} /> Term
+                            </label>
+                            <select
+                                className="select"
+                                value={selectedTerm ? selectedTerm.name.replace(/\s*\(UBC-[VO]\)$/, "") : ""}
+                                onChange={(e) => handleDisplayTermChange(e.target.value)}
+                                style={{ width: "100%", padding: "9px 10px", borderRadius: "8px", border: `1px solid ${COLORS.ACCENT}`, background: "#fff", color: COLORS.TEXT_DARK, fontSize: "13.5px" }}
+                            >
+                                {displayTerms.map((t) => (
+                                    <option key={t} value={t}>{t}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                    {generated && schedules.length === 0 && (
-                        <EmptyState
-                            tone="error"
-                            title={unavailableComponents.length > 0 ? "No available schedules" : "No conflict-free combination exists"}
-                            message={
-                                unavailableComponents.length > 0
-                                    ? `${unavailableComponents.map((u) => `${u.courseCode} ${u.type}`).join(", ")} ${unavailableComponents.length > 1 ? "have" : "has"
-                                    } no sections matching your current filters. Try loosening the time range, status, or section filters.`
-                                    : "Every section pairing for these courses overlaps somewhere. Try removing a course or swapping one out to see if a valid schedule opens up."
-                            }
-                        />
-                    )}
+                        <div style={{ flex: 1 }} />
 
-                    {generated && schedules.length > 0 && (
-                        <>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", marginRight: "75px" }}>
-                                <div style={{ fontFamily: "'Fraunces', serif", fontSize: "19px", color: COLORS.PRIMARY }}>
-                                    {schedules.length === 100 ? "99+" : schedules.length} valid schedule{schedules.length > 1 ? "s" : ""} found
-                                </div>
+                        <button
+                            className="btn"
+                            onClick={() => { setGenerated(true); setIndex(0); }}
+                            disabled={courses.length === 0}
+                            style={{
+                                display: "flex", alignItems: "center", gap: "8px",
+                                padding: "11px 20px", borderRadius: "8px", border: "none",
+                                background: courses.length === 0 ? COLORS.ACCENT : COLORS.BLUE,
+                                color: courses.length === 0 ? COLORS.TEXT_MEDIUM : "#fff",
+                                fontWeight: 600, fontSize: "13.5px",
+                                cursor: courses.length === 0 ? "not-allowed" : "pointer",
+                            }}
+                        >
+                            <Sparkles size={16} /> Generate Schedules
+                        </button>
+                    </div>
+
+                    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+                        {!generated && (
+                            <EmptyState
+                                title="Add your courses, then generate"
+                                message="Search for courses by subject and number on the left. The engine will search every combination of lecture, lab, and tutorial sections and show you only the ones with zero time conflicts."
+                            />
+                        )}
+
+                        {generated && schedules.length === 0 && (
+                            <EmptyState
+                                tone="error"
+                                title={unavailableComponents.length > 0 ? "No available schedules" : "No conflict-free combination exists"}
+                                message={
+                                    unavailableComponents.length > 0
+                                        ? `${unavailableComponents.map((u) => `${u.courseCode} ${u.type}`).join(", ")} ${unavailableComponents.length > 1 ? "have" : "has"
+                                        } no sections matching your current filters. Try loosening the time range, status, or section filters.`
+                                        : "Every section pairing for these courses overlaps somewhere. Try removing a course or swapping one out to see if a valid schedule opens up."
+                                }
+                            />
+                        )}
+
+                        {generated && schedules.length > 0 && (
+                            <>
                                 <ScheduleNav
                                     index={index}
                                     total={schedules.length}
+                                    totalLabel={scheduleCountLabel}
                                     onPrev={() => setIndex((i) => Math.max(0, i - 1))}
                                     onNext={() => setIndex((i) => Math.min(schedules.length - 1, i + 1))}
+                                    view={view}
+                                    onViewChange={setView}
                                 />
-                            </div>
 
-                            <ScheduleCalendar schedule={current} settings={settings} />
-                        </>
-                    )}
+                                <div style={{ flex: 1, minHeight: 0 }}>
+                                    {view === "week" ? (
+                                        <ScheduleCalendar schedule={current} settings={settings} />
+                                    ) : (
+                                        <div style={{ height: "100%", overflowY: "auto" }}>
+                                            <ScheduleList schedule={current} />
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
+
+function TopBar() {
+    return (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 22px", background: COLORS.PRIMARY, flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: COLORS.BLUE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <CalendarDays size={16} color="#fff" />
+                </div>
+                <div style={{ fontFamily: "'Fraunces', serif", fontSize: "15px", fontWeight: 600, color: "#fff", lineHeight: 1.1 }}>
+                    UBCSchedules
+                </div>
+            </div>
+            <BugReport />
+        </div>
+    );
+}
+
+const outerStyle = {
+    fontFamily: "'Inter', system-ui, sans-serif",
+    color: COLORS.PRIMARY,
+    height: "100%",
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    background: "#fff",
+};

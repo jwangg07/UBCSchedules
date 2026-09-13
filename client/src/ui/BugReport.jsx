@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { submitBugReport } from "../api/ubcApi.js";
 import { Bug, X } from "lucide-react";
 import { COLORS } from "../util/theme.js";
@@ -12,7 +12,6 @@ export default function BugReport() {
 
     const close = () => {
         setOpen(false);
-        // Small delay so the form doesn't visibly reset before closing
         setTimeout(() => {
             setForm(INITIAL_FORM);
             setStatus({ loading: false, error: null, sent: false });
@@ -32,30 +31,35 @@ export default function BugReport() {
         }
     };
 
+    useEffect(() => {
+        if (!open) return;
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") close();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [open]);
+
     return (
         <>
             <button
                 onClick={() => setOpen(true)}
                 className="btn"
                 style={{
-                    position: "absolute",
-                    display: "flex",
-                    top: "53px",
-                    right: "65px",
-                    zIndex: 40,
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: COLORS.BACKGROUND,
-                    cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: "7px",
+                    padding: "9px 12px", borderRadius: "8px",
+                    border: `1px solid ${COLORS.PRIMARY_DARK_ACCENT}`,
+                    background: "rgba(255,255,255,0.06)", color: COLORS.TEXT_LIGHT,
+                    fontSize: "12.5px", fontWeight: 500, cursor: "pointer",
                 }}
             >
-                <Bug size={18} />
+                <Bug size={14} /> Report a Bug
             </button>
 
             {open && (
                 <div
                     onClick={close}
+                    role="presentation"
                     style={{
                         position: "fixed",
                         inset: 0,
@@ -69,11 +73,14 @@ export default function BugReport() {
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Report a bug"
                         style={{
                             width: "440px",
                             maxWidth: "100%",
                             background: "#fff",
-                            color: "red",
+                            color: COLORS.TEXT_DARK, 
                             borderRadius: "14px",
                             border: `1px solid ${COLORS.ACCENT}`,
                             boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
@@ -103,8 +110,9 @@ export default function BugReport() {
                                     Ran into something broken? Describe what happened.
                                 </div>
 
-                                <label style={labelStyle}>YOUR EMAIL</label>
+                                <label htmlFor="bug-email" style={labelStyle}>YOUR EMAIL</label>
                                 <input
+                                    id="bug-email"
                                     type="email"
                                     required
                                     value={form.email}
@@ -112,8 +120,9 @@ export default function BugReport() {
                                     style={inputStyle}
                                 />
 
-                                <label style={{ ...labelStyle, marginTop: "14px" }}>WHAT WENT WRONG?</label>
+                                <label htmlFor="bug-description" style={{ ...labelStyle, marginTop: "14px" }}>WHAT WENT WRONG?</label>
                                 <textarea
+                                    id="bug-description"
                                     required
                                     value={form.description}
                                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -137,8 +146,8 @@ export default function BugReport() {
                                         padding: "11px",
                                         borderRadius: "8px",
                                         border: "none",
-                                        background: COLORS.SECONDARY,
-                                        color: COLORS.TEXT_DARK,
+                                        background: COLORS.BLUE,
+                                        color: "#fff",
                                         fontWeight: 600,
                                         fontSize: "13.5px",
                                         cursor: status.loading ? "wait" : "pointer",

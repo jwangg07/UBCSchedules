@@ -1,9 +1,20 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden; /* page itself never scrolls; internal panels manage their own scroll */
+}
+
+#root {
+    height: 100%;
+}
+
 .screen-too-small {
     display: none;
 }
 
 .main-content {
     display: block;
+    height: 100%;
 }
 
 @media (max-width: 900px) {
@@ -23,7 +34,6 @@
         font-family: Fraunces, serif;
         padding: 20px;
         box-sizing: border-box;
-        /* z-index: 9999; */
     }
 
     .main-content {

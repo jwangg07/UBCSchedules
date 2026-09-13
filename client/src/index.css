@@ -30,13 +30,6 @@ body {
     cursor: pointer;
 }
 
-/* .course-row {
-  transition: background 0.15s ease;
-}
-.course-row:hover {
-  background: #eef1f4;
-} */
-
 .btn,
 .nav-btn:hover {
     transition: opacity 0.15s ease, transform 0.1s ease;
@@ -63,17 +56,17 @@ body {
     transition: background 0.15s ease;
 }
 
+/* Was a near-white background left over from the old light-themed sidebar —
+   against the now-dark navy sidebar + light course text, that made hovered
+   rows nearly unreadable. Lighten the existing dark background instead of
+   flipping to white, so text stays legible. */
 .course-row:hover {
-    background: #eef1f4cf;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .course-info {
     transition: opacity 0.12s ease;
 }
-
-/* .course-row:hover .course-info {
-  opacity: 0;
-} */
 
 .select-hint {
     position: absolute;
@@ -84,8 +77,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12.5px;
-    font-weight: 500;
     opacity: 0;
     transition: opacity 0.15s ease;
     pointer-events: none;
@@ -108,11 +99,22 @@ body {
 }
 
 .course-row:hover .course-remove-button {
-    color: var(--TEXT_DARK);
+    color: var(--TEXT_LIGHT);
 }
 
 .course-row:hover .course-remove-button:hover {
     color: var(--SECONDARY);
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.25);
+}
+
+.select {
+    cursor: pointer;
 }
 
 /* Skeleton blocks */
