@@ -10,7 +10,7 @@ import { DEFAULT_SETTINGS } from "./ui/ScheduleSettings.jsx";
 import SkeletonLoader from "./ui/SkeletonLoader.jsx";
 import BugReport from "./ui/BugReport.jsx";
 import { COLORS } from "./util/theme.js";
-import { CalendarDays, Sparkles } from "lucide-react";
+import { CalendarDays, MapPin, Sparkles } from "lucide-react";
 
 /**
  * Renders the course scheduler application.
@@ -225,8 +225,6 @@ export default function App() {
 
             <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
                 <CourseSidebar
-                    campus={campus}
-                    onCampusChange={handleCampusChange}
                     courses={courses}
                     onAddCourse={handleAddCourse}
                     onRemoveCourse={handleRemoveCourse}
@@ -242,6 +240,21 @@ export default function App() {
                 <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "20px 28px", background: "#fff" }}>
                     {/* Controls row */}
                     <div style={{ display: "flex", alignItems: "flex-end", gap: "16px", marginBottom: "18px", flexShrink: 0 }}>
+                        <div style={{ minWidth: "150px" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: COLORS.TEXT_MEDIUM, marginBottom: "6px" }}>
+                                <MapPin size={12} /> Campus
+                            </label>
+                            <select
+                                className="select"
+                                value={campus}
+                                onChange={(e) => handleCampusChange(e.target.value)}
+                                style={{ width: "100%", padding: "9px 10px", borderRadius: "8px", border: `1px solid ${COLORS.ACCENT}`, background: "#fff", color: COLORS.TEXT_DARK, fontSize: "13.5px" }}
+                            >
+                                <option>Vancouver</option>
+                                <option>Okanagan</option>
+                            </select>
+                        </div>
+
                         <div style={{ minWidth: "230px" }}>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: COLORS.TEXT_MEDIUM, marginBottom: "6px" }}>
                                 <CalendarDays size={12} /> Term

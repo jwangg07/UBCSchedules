@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import ScheduleSettings from "./ScheduleSettings.jsx";
 import SectionPicker from "./SectionPicker.jsx";
 import { COLORS } from "./../util/theme.js";
-import { X, Settings, Plus, ChevronDown, ChevronUp, MapPin } from "lucide-react";
+import { X, Settings, Plus, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function CourseSidebar({
-    campus,
-    onCampusChange,
     courses,
     onAddCourse,
     onRemoveCourse,
@@ -168,24 +166,7 @@ export default function CourseSidebar({
                 </button>
 
                 {settingsOpen && (
-                    <>
-                        <div style={{ marginBottom: "18px" }}>
-                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: COLORS.PRIMARY_LIGHT, marginBottom: "8px" }}>
-                                <MapPin size={12} /> Campus
-                            </label>
-                            <select
-                                className="select"
-                                value={campus}
-                                onChange={(e) => onCampusChange(e.target.value)}
-                                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: `1px solid ${COLORS.PRIMARY_DARK_ACCENT}`, borderRight: `10px solid transparent`, background: COLORS.PRIMARY_DARK, color: COLORS.TEXT_LIGHT, fontSize: "13px" }}
-                            >
-                                <option>Vancouver</option>
-                                <option>Okanagan</option>
-                            </select>
-                        </div>
-
-                        <ScheduleSettings settings={settings} onSettingsChange={onSettingsChange} />
-                    </>
+                    <ScheduleSettings settings={settings} onSettingsChange={onSettingsChange} />
                 )}
             </div>
         </div>
