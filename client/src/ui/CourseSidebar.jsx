@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ScheduleSettings from "./ScheduleSettings.jsx";
 import SectionPicker from "./SectionPicker.jsx";
 import { COLORS } from "./../util/theme.js";
-import { X, Settings, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Settings, Plus, ChevronDown, ChevronUp, MapPin } from "lucide-react";
+
+const MIN_SIDEBAR_WIDTH = 260;
+const MAX_SIDEBAR_WIDTH = 560;
+const DEFAULT_SIDEBAR_WIDTH = 320;
 
 export default function CourseSidebar({
     courses,
@@ -21,6 +25,46 @@ export default function CourseSidebar({
     const [showAddForm, setShowAddForm] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(true);
     const [openPickerFor, setOpenPickerFor] = useState(null);
+
+    const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+    const [isResizing, setIsResizing] = useState(false);
+    const [handleHovered, setHandleHovered] = useState(false);
+    const resizeStart = useRef({ x: 0, width: DEFAULT_SIDEBAR_WIDTH });
+
+    const handleResizeStart = (e) => {
+        e.preventDefault();
+        resizeStart.current = { x: e.clientX, width: sidebarWidth };
+        setIsResizing(true);
+    };
+
+    const handleResizeMove = useCallback((e) => {
+        const delta = e.clientX - resizeStart.current.x;
+        const nextWidth = Math.min(
+            MAX_SIDEBAR_WIDTH,
+            Math.max(MIN_SIDEBAR_WIDTH, resizeStart.current.width + delta)
+        );
+        setSidebarWidth(nextWidth);
+    }, []);
+
+    const handleResizeEnd = useCallback(() => {
+        setIsResizing(false);
+    }, []);
+
+    useEffect(() => {
+        if (!isResizing) return;
+
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+
+        window.addEventListener("mousemove", handleResizeMove);
+        window.addEventListener("mouseup", handleResizeEnd);
+        return () => {
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+            window.removeEventListener("mousemove", handleResizeMove);
+            window.removeEventListener("mouseup", handleResizeEnd);
+        };
+    }, [isResizing, handleResizeMove, handleResizeEnd]);
 
     const handleAdd = (e) => {
         e.preventDefault();
@@ -42,7 +86,20 @@ export default function CourseSidebar({
     }, [showAddForm]);
 
     return (
-        <div style={{ width: "320px", background: COLORS.PRIMARY, color: COLORS.TEXT_LIGHT, padding: "20px 18px", flexShrink: 0, display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden" }}>
+        <div
+            style={{
+                position: "relative",
+                width: `${sidebarWidth}px`,
+                background: COLORS.PRIMARY,
+                color: COLORS.TEXT_LIGHT,
+                padding: "20px 18px",
+                flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
+                overflowY: "auto",
+                overflowX: "hidden",
+            }}
+        >
             {/* --- Course selection --- */}
             <div style={{ fontSize: "11px", letterSpacing: "0.06em", color: COLORS.PRIMARY_LIGHT, marginBottom: "12px", fontWeight: 600 }}>
                 COURSE SELECTION
@@ -168,6 +225,56 @@ export default function CourseSidebar({
                 {settingsOpen && (
                     <ScheduleSettings settings={settings} onSettingsChange={onSettingsChange} />
                 )}
+            </div>
+
+            {/* --- Resize handle --- */}
+            <div
+                onMouseDown={handleResizeStart}
+                onMouseEnter={() => setHandleHovered(true)}
+                onMouseLeave={() => setHandleHovered(false)}
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize course sidebar"
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    right: "0px",
+                    bottom: 0,
+                    width: "7px",
+                    cursor: "col-resize",
+                    zIndex: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: isResizing
+                        ? "rgba(255,255,255,0.15)"
+                        : handleHovered
+                            ? "rgba(255,255,255,0.08)"
+                            : "transparent",
+                }}
+            >
+                {/* Grip dots */}
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "3px",
+                        transition: "opacity 0.15s ease",
+                        pointerEvents: "none",
+                    }}
+                >
+                    {[0, 1, 2].map((i) => (
+                        <span
+                            key={i}
+                            style={{
+                                width: "3px",
+                                height: "3px",
+                                borderRadius: "50%",
+                                background: COLORS.PRIMARY_LIGHT,
+                            }}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );
